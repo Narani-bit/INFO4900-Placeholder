@@ -1,3 +1,11 @@
+# Unity .gitignore Template
+# Source: https://github.com/github/gitignore/blob/main/Unity.gitignore
+# Last synced: 2026-07-02
+# License: CC0-1.0
+#
+# This template is maintained from the github/gitignore repository
+# and distributed under Creative Commons Zero v1.0 Universal license.
+
 # This .gitignore file should be placed at the root of your Unity project directory
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
@@ -77,6 +85,16 @@ mono_crash.*
 *.unitypackage.meta
 *.app
 
+# Signing material, local configuration and native crash symbols
+*.keystore
+*.jks
+*.pfx
+*.symbols.zip
+.env
+.env.*
+!.env.example
+google-services.json
+
 # Crashlytics generated file
 crashlytics-build.properties
 
@@ -102,8 +120,10 @@ InitTestScene*.unity*
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
-# UI Toolkit auto generated files
-/UIElementsSchema/
-
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Standalone Core regression checks (not generated Unity projects)
+!Tests/CoreChecks/CoreChecks.csproj
+/Tests/**/bin/
+/Tests/**/obj/
