@@ -21,11 +21,14 @@ Ouvrir l'une des scènes puis lancer Play. Sur PC : ZQSD ou WASD pour se déplac
 bouton droit maintenu pour regarder, clic gauche pour interagir.
 
 Le carnet se rappelle avec **C**, ou **X sur la manette gauche** sur Quest. En VR,
-il reste dans le monde pendant la lecture, à environ un mètre lors de son placement.
-La scène Quest utilise une origine au sol, la téléportation et la rotation par crans.
+il suit la main gauche hors lecture ; **Lire** le fixe dans le monde à un mètre
+et **Réduire** le ramène à la main. La scène PC conserve le suivi de la vue.
+La scène Quest utilise une origine au sol, la téléportation, la rotation par crans
+de 45° et une vignette de confort. Les destinations occupées par le mobilier sont refusées.
 
-Les menus **Cercle VR / Creer scene** servent à créer une nouvelle scène. Ils
-préservent les scènes existantes et réutilisent `Assets/CercleVR/Materials/Sol.mat`.
+Les menus **Cercle VR / Creer scene** ouvrent la scène existante sans la recréer,
+ou créent la scène canonique si elle manque. Ils réutilisent `Assets/CercleVR/Materials/Sol.mat`
+et assignent `Base.mat` au jeu pour inclure le shader URP dans les builds.
 Il n'est pas nécessaire de régénérer les scènes pour jouer.
 
 ## Compiler
@@ -52,16 +55,26 @@ projet. Avec sa version 0.9.1-exp.1, passer explicitement la cible et la scène 
 builds automatisés : sélectionner uniquement un nom de profil peut laisser les
 anciennes valeurs globales dans la commande. Même avec cible/scène explicites,
 les overrides graphiques ne sont pas garantis par cette commande du connecteur.
-Préférer **Cercle VR > Build > Quest avec son profil** (ou **PC avec son profil**),
+Préférer **Cercle VR > Build > Quest - Developpement**, **Quest - Livraison**
+(ou **PC avec son profil**),
 qui transmet le profil à l'API native Unity `BuildPlayerWithProfileOptions`.
-En automatisation Unity : `-executeMethod CercleVR.Editor.CercleProfileBuild.Quest`
-ou `.PC`. Le rapport est écrit à côté du binaire dans `Builds/`.
+En automatisation Unity : `-executeMethod CercleVR.Editor.CercleProfileBuild.QuestDevelopment`,
+`.QuestRelease` ou `.PC`, une fois le profil actif et son importation terminée.
+Les sorties Quest sont `Builds/Quest-Development/CercleQuest.apk` et
+`Builds/Quest-Release/CercleQuest.apk`. Le rapport voisin contient options, erreurs,
+avertissements et SHA-256. La commande de livraison désactive explicitement
+Development, Script Debugging, attente du débogueur et profilage connecté.
+Elle aligne aussi la plateforme sélectionnée sur la cible active pour la validation
+OpenXR et refuse un rapport contenant une erreur, même si Unity indique `Succeeded`.
+La permission Internet est retirée de la version hors ligne par le traitement du
+manifeste Android ; revoir cette règle si une fonction réseau est ajoutée au jeu.
 
 Le niveau de qualité Meta Quest et le pipeline de secours global référencent
 `Assets/Settings/Quest_RPAsset.asset`, copie locale du pipeline URP Quest initial.
 Ses réglages restent **MSAA désactivé (1)** et **Render Scale 1**. Le pipeline
 Mobile existant conserve ses propres réglages ; aucun de ces assets n'est ajusté
 pour modifier la résolution ou l'anticrénelage dans cette correction.
+
 
 Les APK/AAB, symboles natifs, clés de signature et fichiers de secrets sont exclus
 de Git. Livrer l'APK validé via une **Release GitHub** ou le lien convenu avec
@@ -76,7 +89,29 @@ Utiliser le modèle **Bug** dans **New issue**, puis renseigner le commit, la ve
 le mode de test, la scène, le niveau et la graine. Le modèle sera proposé par GitHub
 après fusion de son ajout sur la branche principale.
 
+## Contributions et accès au dépôt
+
+Le dépôt reste **privé jusqu'à la remise**. Ne jamais pousser directement sur `main`,
+réécrire son historique ou la supprimer. Chaque changement passe par une branche
+courte, une pull request et la revue d'un autre membre avant fusion.
+
+Le propriétaire vérifie les collaborateurs (équipe et enseignante si demandé).
+Chaque membre active lui-même la double authentification de son compte GitHub.
+Ces réglages personnels et l'approbation humaine ne sont pas remplacés par les tests.
+
 ## Tests de logique
+
+Dans Unity : **Window > General > Test Runner > EditMode > Run All**.
+L'assembly `CercleVR.Core.Tests` contient **761 tests** : 720 cas de génération
+(7 à 12 PNJ, 3 leçons, 1 à 2 maléfiques, 20 graines), 36 cas de déterminisme,
+la campagne et les règles de santé/victoire. `CercleVR.Core` n'a aucune référence Unity.
+
+Les scripts de contrôle en mode Play se trouvent dans `Tests/Unity/`.
+`IssuePlayChecks.Main` parcourt les six niveaux, contrôle les matériaux, dialogues,
+le carnet et, dans la scène Quest, la téléportation et la vignette avec des poses
+et entrées synthétiques. Exécuter via `script run` du connecteur Pipeline après
+avoir lancé Play ; recommencer Play entre deux campagnes. Ce contrôle ne remplace
+pas la lecture et le confort dans le casque.
 
 Avec le SDK .NET 10 installé, depuis la racine du dépôt :
 
@@ -89,7 +124,6 @@ assertions sur 24 énigmes et 4 campagnes : solution unique, cohérence des indi
 révélations, exécutions, santé, victoire/défaite, progression et redémarrage.
 Il échoue avec un code de sortie non nul si une assertion échoue.
 Il ne remplace pas les essais Unity, des entrées réelles et du casque.
-
 
 Dans Unity, le menu **Cercle VR > Tests > Verifier les principes des cours**
 contrôle les réglages XR, les repères et le placement de lecture hors Play.

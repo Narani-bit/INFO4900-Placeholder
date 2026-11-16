@@ -155,6 +155,7 @@ MonoBehaviour:
   campaignLevels: 6
   nextLevelDelay: 3
   clipboardAnchor: {fileID: 0}
+  baseMaterial: {fileID: 2100000, guid: 81f487d282c69a0478bfb8d2e20a0f17, type: 2}
   clipboardViewOffset: {x: -0.34, y: -0.1, z: 1}
 --- !u!4 &132462780
 Transform:

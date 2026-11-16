@@ -1,0 +1,7 @@
+{
+    "name": "CercleVR.Core",
+    "rootNamespace": "CercleVR.Core",
+    "references": [],
+    "autoReferenced": true,
+    "noEngineReferences": true
+}

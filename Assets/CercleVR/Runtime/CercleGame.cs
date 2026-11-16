@@ -17,6 +17,7 @@ namespace CercleVR
         [Range(1, 50)] public int campaignLevels = 6;
         [Range(1, 10)] public float nextLevelDelay = 3f;
         public Transform clipboardAnchor;
+        [SerializeField] private Material baseMaterial;
         public Vector3 clipboardViewOffset = new Vector3(-0.34f, -0.10f, 1.0f);
         private Session session;
         private CampaignProgress campaign;
@@ -49,6 +50,12 @@ namespace CercleVR
 
         private void Start()
         {
+            if (baseMaterial == null)
+            {
+                Debug.LogError("CercleGame : assigner le materiau URP de base dans la scene.", this);
+                enabled = false;
+                return;
+            }
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             campaign = new CampaignProgress(campaignLevels);
             BuildRoom();
@@ -56,9 +63,7 @@ namespace CercleVR
         }
         private Material Material(Color color)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) shader = Shader.Find("Standard");
-            var material = new Material(shader); material.color = color;
+            var material = new Material(baseMaterial); material.color = color;
             (actorPhase ? actorMaterials : materials).Add(material);
             return material;
         }
@@ -136,7 +141,7 @@ namespace CercleVR
         {
             dialogue = new GameObject("Dialogue du personnage selectionne").transform;
             dialogue.SetParent(transform, false);
-            dialogue.gameObject.AddComponent<FaceCamera>().keepUpright = false;
+            dialogue.gameObject.AddComponent<FaceCamera>().keepUpright = true;
             Shape("Bordure dialogue", PrimitiveType.Cube, dialogue, new Vector3(0, 0, 0.015f), new Vector3(1.84f, 1.06f, 0.025f), Accent);
             Shape("Fond dialogue", PrimitiveType.Cube, dialogue, Vector3.zero, new Vector3(1.80f, 1.02f, 0.035f), Paper);
             var canvas = PaperLayout.CreateCanvas(dialogue, "Texte fixe du dialogue", 1.80f, 1.02f, -0.0195f);

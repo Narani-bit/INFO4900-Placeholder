@@ -1,0 +1,8 @@
+{
+    "name": "CercleVR.Core.Tests",
+    "rootNamespace": "CercleVR.Tests",
+    "references": ["CercleVR.Core"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"],
+    "autoReferenced": false
+}

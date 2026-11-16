@@ -1,0 +1,52 @@
+[
+  {
+    "file": "1_INTRODUCTION.pdf",
+    "pages": 15,
+    "sha256": "0e13ae7ecfea645265c9904d6342536a2de3f75aa0e7a3ffcee4bba304a4e906"
+  },
+  {
+    "file": "2_Transformations 3d_PartieI.pdf",
+    "pages": 30,
+    "sha256": "5dc9a47a69a8a464fafcf6c3a6dcb6f019cfe8fff57f2d067d1d715e273a9364"
+  },
+  {
+    "file": "2_Transformations 3d_PartieII.pdf",
+    "pages": 24,
+    "sha256": "33f324eebfbcf86de705477af99864cb384259e134c4eb532657b4f74fe5c607"
+  },
+  {
+    "file": "3_PipelineGraphique_frustum de vue.pdf",
+    "pages": 13,
+    "sha256": "ab0a53581440480be8f3752e68c539e674ab5d78053fe9382eeb5c7c813b6a10"
+  },
+  {
+    "file": "3_PipelineGraphique_Unity_VR - 2.pdf",
+    "pages": 14,
+    "sha256": "a36bcb0aea4c44d480d0438e9fd6c06ee8a7a5936328ecbb486fb99059b579bd"
+  },
+  {
+    "file": "4-Perception_visuelle_PartieI-1.pdf",
+    "pages": 24,
+    "sha256": "6dce99d28539c5796c504b0127dd8627797b6e631288fe19493b58c696070810"
+  },
+  {
+    "file": "5-HMD_I.pdf",
+    "pages": 16,
+    "sha256": "e6512f69d07a456d82b5b91e7058cc2c97e28d5f915d02e4ce0111c170196aaf"
+  },
+  {
+    "file": "5-HMD_II.pdf",
+    "pages": 20,
+    "sha256": "451c7958e905daf8816c23dbd6cb7c77443c4742352c8d663cff187aa72dbff4"
+  },
+  {
+    "file": "5-Perception_visuelle_PartieII_Conseils de conception par Meta.pdf",
+    "pages": 15,
+    "sha256": "cb839a249ab2cd9552bd7e9a9a111f2f8a7f0713ad798bd95381ac45565bd0be"
+  },
+  {
+    "file": "6-IMU.pdf",
+    "pages": 30,
+    "sha256": "c168bce26cb2d344e4ca316e9d9c65921395c2c949e7a20f5bf7d19dcd9dc97c"
+  }
+]

@@ -8,6 +8,10 @@ using UnityEngine;
 using UnityEngine.InputSystem.XR;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Comfort;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
 
 namespace CercleVR.Editor
 {
@@ -43,6 +47,12 @@ namespace CercleVR.Editor
                 try
                 {
                     var roots = scene.GetRootGameObjects();
+                    var games = roots.SelectMany(r => r.GetComponentsInChildren<CercleGame>(true)).ToArray();
+                    check(games.Length == 1, path + ": un seul jeu attendu.");
+                    var game = games[0];
+                    var material = new SerializedObject(game).FindProperty("baseMaterial").objectReferenceValue as Material;
+                    check(material != null && material.shader != null && material.shader.name == "Universal Render Pipeline/Lit",
+                        path + ": materiau URP de base manquant.");
                     var cameras = roots.SelectMany(r => r.GetComponentsInChildren<Camera>(true)).ToArray();
                     check(cameras.Length == 1, path + ": une seule camera attendue.");
                     check(Mathf.Approximately(cameras[0].nearClipPlane, 0.05f), path + ": near.");
@@ -56,6 +66,24 @@ namespace CercleVR.Editor
                     {
                         check(origins.Length == 1, "Un XR Origin attendu.");
                         var origin = origins[0];
+                        check(Vector3.Distance(origin.transform.position, CercleSceneBuilder.QuestStartPosition) < 0.001f, "Position de depart incoherente.");
+                        check(game.clipboardAnchor != null && game.clipboardAnchor.parent.name == "Left Controller" &&
+                            game.clipboardAnchor.IsChildOf(origin.transform), "Carnet sans ancrage a la main gauche.");
+                        check(origin.GetComponentsInChildren<ContinuousMoveProvider>(true).All(p => !p.enabled), "Deplacement continu actif.");
+                        check(origin.GetComponentsInChildren<ContinuousTurnProvider>(true).All(p => !p.enabled), "Rotation continue active.");
+                        var snap = origin.GetComponentInChildren<SnapTurnProvider>(true);
+                        var teleport = origin.GetComponentInChildren<TeleportationProvider>(true);
+                        check(snap != null && snap.isActiveAndEnabled && teleport != null && teleport.isActiveAndEnabled, "Locomotion de confort inactive.");
+                        var vignette = cameras[0].GetComponentInChildren<TunnelingVignetteController>(true);
+                        check(vignette != null && vignette.isActiveAndEnabled, "Vignette absente.");
+                        check(vignette.locomotionVignetteProviders.Any(p => p.enabled && p.locomotionProvider == snap) &&
+                            vignette.locomotionVignetteProviders.Any(p => p.enabled && p.locomotionProvider == teleport), "Vignette non reliee aux providers.");
+                        check(snap.delayTime >= vignette.defaultParameters.easeInTime &&
+                            teleport.delayTime >= vignette.defaultParameters.easeInTime && vignette.defaultParameters.easeInTimeLock,
+                            "La vignette doit preceder le mouvement instantane.");
+                        var areas = roots.SelectMany(r => r.GetComponentsInChildren<SafeTeleportationArea>(true)).ToArray();
+                        check(areas.Length == 1 && areas[0].playerRig == origin.transform &&
+                            areas[0].teleportationProvider == teleport && areas[0].colliders.Count > 0, "Controle des destinations incomplet.");
                         check(origin.RequestedTrackingOriginMode == XROrigin.TrackingOriginMode.Floor, "Suivi Floor.");
                         check(Vector3.Distance(origin.transform.lossyScale, Vector3.one) < 0.0001f, "Echelle metrique XR.");
                         check(origin.GetComponent<XrTrackingGuard>() != null, "Controle du suivi absent.");
@@ -71,7 +99,11 @@ namespace CercleVR.Editor
                             check(!manager.smoothTurnEnabled, "Rotation par crans par defaut.");
                         }
                     }
-                    else check(origins.Length == 0, "La scene PC doit rester independante du rig XR.");
+                    else
+                    {
+                        check(origins.Length == 0, "La scene PC doit rester independante du rig XR.");
+                        check(game.clipboardAnchor == null, "Le carnet PC doit suivre la vue.");
+                    }
                 }
                 finally { if (!wasOpen) EditorSceneManager.CloseScene(scene, true); }
             }
