@@ -38,7 +38,7 @@ namespace CercleVR
         private int selected = -1, pending = -1;
         private bool generating;
         private int panelMode, panelPage;
-        private string notice = "Carnet : C / bouton X gauche pour le rappeler.";
+        private string notice = "Viser puis appuyer sur la gachette. X gauche rappelle le carnet.";
         private readonly List<Material> materials = new List<Material>();
         private readonly List<Material> actorMaterials = new List<Material>();
         private bool actorPhase;
@@ -67,11 +67,25 @@ namespace CercleVR
             (actorPhase ? actorMaterials : materials).Add(material);
             return material;
         }
-        private GameObject Shape(string name, PrimitiveType type, Transform parent, Vector3 position, Vector3 scale, Color color, Action action = null)
+        private GameObject Shape(string name, PrimitiveType type, Transform parent, Vector3 position, Vector3 scale, Color color, Action action = null, bool solid = false)
         {
             var go = GameObject.CreatePrimitive(type); go.name = name;
             go.transform.SetParent(parent, false); go.transform.localPosition = position; go.transform.localScale = scale;
             go.GetComponent<Renderer>().sharedMaterial = Material(color);
+            var primitiveCollider = go.GetComponent<Collider>();
+            if (type == PrimitiveType.Cylinder || (action == null && !solid))
+            {
+                primitiveCollider.enabled = false;
+                Destroy(primitiveCollider);
+                if (action != null || solid)
+                {
+                    // A scaled capsule stays round and protrudes above a flat table or token.
+                    var surface = go.AddComponent<MeshCollider>();
+                    surface.sharedMesh = go.GetComponent<MeshFilter>().sharedMesh;
+                    surface.convex = true;
+                }
+            }
+            if (solid) go.layer = LayerMask.NameToLayer("Ignore Raycast");
             if (action != null) go.AddComponent<WorldAction>().Bind(action);
             return go;
         }
@@ -91,7 +105,8 @@ namespace CercleVR
         {
             clipboard = new GameObject("Clipboard d'enquete").transform;
             clipboard.SetParent(transform, false);
-            Shape("Planche clipboard", PrimitiveType.Cube, clipboard, Vector3.zero, new Vector3(0.56f, 0.82f, 0.018f), new Color(0.30f, 0.20f, 0.11f));
+            var board = Shape("Planche clipboard", PrimitiveType.Cube, clipboard, Vector3.zero,
+                new Vector3(0.56f, 0.82f, 0.018f), new Color(0.30f, 0.20f, 0.11f), ToggleClipboardReading);
             Shape("Feuille clipboard", PrimitiveType.Cube, clipboard, new Vector3(0, 0, -0.012f), new Vector3(0.53f, 0.77f, 0.003f), Paper);
             Shape("Pince metallique", PrimitiveType.Cube, clipboard, new Vector3(0, 0.377f, -0.022f), new Vector3(0.16f, 0.045f, 0.014f), new Color(0.60f, 0.63f, 0.65f));
             var canvas = PaperLayout.CreateCanvas(clipboard, "Mise en page clipboard", 0.53f, 0.77f, -0.016f);
@@ -128,14 +143,15 @@ namespace CercleVR
             mount.anchorOverride = clipboardAnchor;
             mount.viewOffset = clipboardViewOffset;
             mount.ReadingChanged += reading =>
+            {
+                board.GetComponent<Collider>().enabled = !reading;
                 readingAction.GetComponentInChildren<PaperLabel>().text = reading ? "Reduire" : "Lire";
+            };
             // LateUpdate places the board after the tracked camera's first pose update.
         }
         private void ToggleClipboardReading()
         {
-            var mount = clipboard.GetComponent<ClipboardMount>();
-            mount.ToggleReading();
-            readingAction.GetComponentInChildren<PaperLabel>().text = mount.Reading ? "Reduire" : "Lire";
+            clipboard.GetComponent<ClipboardMount>().ToggleReading();
         }
         private void BuildDialogue()
         {
@@ -163,15 +179,15 @@ namespace CercleVR
         {
             Color stone = new Color(0.16f, 0.19f, 0.22f), wood = new Color(0.25f, 0.15f, 0.08f);
             // A separate floor/teleport surface is created by the Editor menu.
-            Shape("Mur gauche", PrimitiveType.Cube, transform, new Vector3(-6, 1.5f, 0), new Vector3(0.2f, 3, 12), stone);
-            Shape("Mur droit", PrimitiveType.Cube, transform, new Vector3(6, 1.5f, 0), new Vector3(0.2f, 3, 12), stone);
-            Shape("Mur entree", PrimitiveType.Cube, transform, new Vector3(0, 1.5f, -6), new Vector3(12, 3, 0.2f), stone);
-            Shape("Fond gauche", PrimitiveType.Cube, transform, new Vector3(-3.6f, 1.5f, 6), new Vector3(4.8f, 3, 0.2f), stone);
-            Shape("Fond droit", PrimitiveType.Cube, transform, new Vector3(3.6f, 1.5f, 6), new Vector3(4.8f, 3, 0.2f), stone);
-            Shape("Table", PrimitiveType.Cylinder, transform, new Vector3(0, 0.77f, 0), new Vector3(2.3f, 0.07f, 2.3f), wood);
-            Shape("Pied table", PrimitiveType.Cylinder, transform, new Vector3(0, 0.35f, 0), new Vector3(0.35f, 0.35f, 0.35f), wood);
+            Shape("Mur gauche", PrimitiveType.Cube, transform, new Vector3(-6, 1.5f, 0), new Vector3(0.2f, 3, 12), stone, solid: true);
+            Shape("Mur droit", PrimitiveType.Cube, transform, new Vector3(6, 1.5f, 0), new Vector3(0.2f, 3, 12), stone, solid: true);
+            Shape("Mur entree", PrimitiveType.Cube, transform, new Vector3(0, 1.5f, -6), new Vector3(12, 3, 0.2f), stone, solid: true);
+            Shape("Fond gauche", PrimitiveType.Cube, transform, new Vector3(-3.6f, 1.5f, 6), new Vector3(4.8f, 3, 0.2f), stone, solid: true);
+            Shape("Fond droit", PrimitiveType.Cube, transform, new Vector3(3.6f, 1.5f, 6), new Vector3(4.8f, 3, 0.2f), stone, solid: true);
+            Shape("Table", PrimitiveType.Cylinder, transform, new Vector3(0, 0.77f, 0), new Vector3(2.3f, 0.07f, 2.3f), wood, solid: true);
+            Shape("Pied table", PrimitiveType.Cylinder, transform, new Vector3(0, 0.35f, 0), new Vector3(0.35f, 0.35f, 0.35f), wood, solid: true);
             doorPivot = new GameObject("Porte pivot").transform; doorPivot.SetParent(transform, false); doorPivot.localPosition = new Vector3(-1.1f, 0, 6);
-            Shape("Porte", PrimitiveType.Cube, doorPivot, new Vector3(1.1f, 1.3f, 0), new Vector3(2.2f, 2.6f, 0.15f), wood);
+            Shape("Porte", PrimitiveType.Cube, doorPivot, new Vector3(1.1f, 1.3f, 0), new Vector3(2.2f, 2.6f, 0.15f), wood, solid: true);
             BuildClipboard();
             BuildDialogue();
         }
@@ -224,7 +240,7 @@ namespace CercleVR
                 retryAction.SetActive(true); yield break;
             }
             session = new Session(puzzle); BuildActors();
-            generating = false; notice = "Pointer un personnage ou son jeton pour l'interroger.";
+            generating = false; notice = "Viser un personnage ou son jeton et presser la gachette.";
             Refresh();
         }
         private void BuildActors()
@@ -243,11 +259,18 @@ namespace CercleVR
                 characterRoots[i] = actor;
                 actor.SetParent(actors, false); actor.localPosition = radial * 2.8f;
                 actor.localRotation = Quaternion.LookRotation(-radial);
+                var upperBody = actor.gameObject.AddComponent<BoxCollider>();
+                upperBody.center = new Vector3(0, 1.26f, 0);
+                upperBody.size = new Vector3(0.46f, 1.14f, 0.36f);
+                var legs = actor.gameObject.AddComponent<BoxCollider>();
+                legs.center = new Vector3(0, 0.46f, 0.24f);
+                legs.size = new Vector3(0.48f, 0.78f, 0.54f);
+                actor.gameObject.AddComponent<WorldAction>().Bind(() => Select(id));
                 Color chair = new Color(0.26f, 0.18f, 0.10f);
-                Shape("Assise", PrimitiveType.Cube, actor, new Vector3(0, 0.65f, 0), new Vector3(0.65f, 0.12f, 0.65f), chair);
-                Shape("Dossier", PrimitiveType.Cube, actor, new Vector3(0, 1.0f, -0.3f), new Vector3(0.65f, 0.65f, 0.10f), chair);
-                bodies[i] = Shape("Corps", PrimitiveType.Capsule, actor, new Vector3(0, 1.12f, 0), new Vector3(0.4f, 0.38f, 0.3f), colors[i], () => Select(id)).GetComponent<Renderer>();
-                Shape("Tete", PrimitiveType.Sphere, actor, new Vector3(0, 1.66f, 0), Vector3.one * 0.33f, new Color(0.72f, 0.53f, 0.38f), () => Select(id));
+                Shape("Assise", PrimitiveType.Cube, actor, new Vector3(0, 0.65f, 0), new Vector3(0.65f, 0.12f, 0.65f), chair, solid: true);
+                Shape("Dossier", PrimitiveType.Cube, actor, new Vector3(0, 1.0f, -0.3f), new Vector3(0.65f, 0.65f, 0.10f), chair, solid: true);
+                bodies[i] = Shape("Corps", PrimitiveType.Capsule, actor, new Vector3(0, 1.12f, 0), new Vector3(0.4f, 0.38f, 0.3f), colors[i]).GetComponent<Renderer>();
+                Shape("Tete", PrimitiveType.Sphere, actor, new Vector3(0, 1.66f, 0), Vector3.one * 0.33f, new Color(0.72f, 0.53f, 0.38f));
                 for (int side = -1; side <= 1; side += 2)
                 {
                     Shape("Cuisse", PrimitiveType.Cube, actor, new Vector3(side * 0.14f, 0.75f, 0.25f), new Vector3(0.16f, 0.17f, 0.5f), colors[i]);
@@ -354,14 +377,15 @@ namespace CercleVR
                 text.AppendLine("Un siege retire reste compte dans les distances.");
                 text.AppendLine("Plusieurs personnages peuvent annoncer le meme role.");
                 text.AppendLine("Un marqueur est VOTRE hypothese, jamais une preuve.");
-                text.AppendLine("Selectionner un personnage ou son jeton ouvre son dialogue.");
+                text.AppendLine("Viser un personnage, son nom ou son jeton, puis presser la gachette ou la poignee.");
                 text.AppendLine("Marquer et Accuser sont dans ce dialogue.");
                 text.AppendLine("Accuser affiche Confirmer et Annuler. Fermer annule aussi.");
                 text.AppendLine("La difficulte augmente au fil des niveaux.");
                 text.AppendLine("Oracle : historique public. Roles : familles d'indices.");
                 text.AppendLine("Les onglets du clipboard changent le document.");
                 text.AppendLine("Page - et Page + parcourent les notes.");
-                text.AppendLine("C ou bouton X gauche : rappeler le carnet devant soi.");
+                text.AppendLine("X gauche (C sur PC) rappelle le carnet devant soi, meme apres un clic.");
+                text.AppendLine("Viser le petit carnet pour le lire. Reduire le ramene a la main.");
                 text.AppendLine("En VR, le carnet reste dans le monde pendant la lecture.");
                 text.AppendLine("Innocent execute : -5 sante. A zero, l'affaire est perdue.");
                 text.AppendLine("Sieges fixes : 1 > 2 > 3... dans le sens horaire vu du dessus.");
@@ -482,7 +506,7 @@ namespace CercleVR
         {
             puzzleRevision++;
             if (nextLevelRoutine != null) { StopCoroutine(nextLevelRoutine); nextLevelRoutine = null; }
-            // The clipboard is parented to the player, so destroy it explicitly with its owner.
+            // Reading can detach the clipboard from the game hierarchy.
             if (clipboard != null) Destroy(clipboard.gameObject);
             foreach (var m in materials) if (m != null) Destroy(m);
             foreach (var m in actorMaterials) if (m != null) Destroy(m);

@@ -15,7 +15,7 @@ namespace CercleVR.Editor
 {
     public static class CercleSceneBuilder
     {
-        public static readonly Vector3 QuestStartPosition = new Vector3(0, 0, -3.5f);
+        public static readonly Vector3 QuestStartPosition = new Vector3(0, 0, -1.95f);
         [MenuItem("Cercle VR/1 - Creer scene PC")]
         public static void Desktop() { Build(false); }
         [MenuItem("Cercle VR/2 - Creer scene Quest")]
@@ -173,6 +173,8 @@ namespace CercleVR.Editor
                 anchor = new GameObject("Clipboard Anchor").transform;
                 anchor.SetParent(left, false);
             }
+            // Keep the compact page outside the pointing hand's near and far interaction rays.
+            anchor.localPosition = Vector3.left * 0.27f;
             game.clipboardAnchor = anchor;
             EditorUtility.SetDirty(game);
         }

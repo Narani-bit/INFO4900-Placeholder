@@ -998,6 +998,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "Recall Clipboard",
+                    "type": "Button",
+                    "id": "53b83468-9a57-4b2a-b923-4536a22e0a04",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -1005,6 +1014,17 @@
                     "name": "",
                     "id": "71a4d23f-3e9a-4513-923b-ba388c5e84bf",
                     "path": "<XRController>{LeftHand}/{GripButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "65af6837-0eda-4142-8274-31557c76aff5",
+                    "path": "<XRController>{LeftHand}/{TriggerButton}",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -1093,6 +1113,17 @@
                     "name": "",
                     "id": "49a23327-a116-48c0-8af9-0d2c50c15a88",
                     "path": "<XRController>{LeftHand}/{Grip}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select Value",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6dbc4d5f-ef8d-410a-a564-107be09c13f3",
+                    "path": "<XRController>{LeftHand}/{Trigger}",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -1372,6 +1403,17 @@
                     "processors": "ScaleVector2(x=0),StickDeadzone",
                     "groups": "",
                     "action": "Translate Manipulation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8c571d59-05c9-4298-af79-0f22dbd156a9",
+                    "path": "<XRController>{LeftHand}/primaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Recall Clipboard",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -2195,6 +2237,17 @@
                 },
                 {
                     "name": "",
+                    "id": "a57eb5b8-66dd-48d4-b4da-5a83be4d2021",
+                    "path": "<XRController>{RightHand}/{TriggerButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "1d5b47ea-64e3-4b99-b620-de6c360908be",
                     "path": "<MetaAimHand>{RightHand}/indexPressed",
                     "interactions": "",
@@ -2285,6 +2338,17 @@
                     "name": "",
                     "id": "dd433817-216c-46b9-8dd3-f3a4ea1767b9",
                     "path": "<XRController>{RightHand}/{Grip}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select Value",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b269ad98-4c1b-4d3d-adee-c7ce45ca65ce",
+                    "path": "<XRController>{RightHand}/{Trigger}",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

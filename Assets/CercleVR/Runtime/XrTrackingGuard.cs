@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.XR;
 using UnityEngine.XR;
 
 namespace CercleVR
@@ -11,9 +13,13 @@ namespace CercleVR
         {
             get
             {
+                var hmd = InputSystem.GetDevice<XRHMD>();
+                if (hmd != null && hmd.enabled)
+                    return IsPoseValid(true, true, hmd.isTracked.isPressed, true,
+                        (InputTrackingState)hmd.trackingState.ReadValue());
                 var head = InputDevices.GetDeviceAtXRNode(XRNode.Head);
-                bool hasTracked = head.TryGetFeatureValue(CommonUsages.isTracked, out bool tracked);
-                bool hasState = head.TryGetFeatureValue(CommonUsages.trackingState, out InputTrackingState state);
+                bool hasTracked = head.TryGetFeatureValue(UnityEngine.XR.CommonUsages.isTracked, out bool tracked);
+                bool hasState = head.TryGetFeatureValue(UnityEngine.XR.CommonUsages.trackingState, out InputTrackingState state);
                 return IsPoseValid(head.isValid, hasTracked, tracked, hasState, state);
             }
         }

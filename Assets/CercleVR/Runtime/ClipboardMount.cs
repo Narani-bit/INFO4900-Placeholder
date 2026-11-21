@@ -2,7 +2,7 @@ using System;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.XR;
+using UnityEngine.XR.Interaction.Toolkit.Inputs;
 
 namespace CercleVR
 {
@@ -12,13 +12,28 @@ namespace CercleVR
     {
         public Transform anchorOverride;
         public Vector3 viewOffset = new Vector3(-0.34f, -0.10f, 1.0f);
-        public Vector3 anchorOffset = new Vector3(0, 0.15f, 0.08f);
-        public Vector3 anchorEuler = new Vector3(50, 0, 0);
+        public Vector3 anchorOffset = new Vector3(0, 0.02f, 0.16f);
+        private const float CompactScale = 0.42f;
+        private const float MinimumHandDistance = 0.65f;
+        private static readonly Vector3 ReadingOffset = new Vector3(0, -0.10f, 1.35f);
+        private static readonly Vector3 RestingOffset = new Vector3(-0.34f, -0.26f, 0.65f);
         public bool Reading { get; private set; }
         public event Action<bool> ReadingChanged;
         private bool needsPlacement = true;
-        private bool recallWasPressed;
-        private Transform lastAnchor;
+        private InputAction recallAction;
+
+        private void Start()
+        {
+            if (anchorOverride == null) return;
+            var manager = anchorOverride.GetComponentInParent<InputActionManager>(true);
+            if (manager == null) return;
+            foreach (var asset in manager.actionAssets)
+            {
+                if (asset == null) continue;
+                recallAction = asset.FindAction("XRI Left Interaction/Recall Clipboard");
+                if (recallAction != null) break;
+            }
+        }
 
         public void ToggleReading()
         {
@@ -38,50 +53,47 @@ namespace CercleVR
 
         private void Update()
         {
-            var left = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
-            bool pressed = left.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out bool button) && button;
             bool keyboard = Keyboard.current != null && Keyboard.current.cKey.wasPressedThisFrame;
-            if ((keyboard || (pressed && !recallWasPressed)) && XrTrackingGuard.CanInteract) Recall();
-            recallWasPressed = pressed;
+            if (keyboard || (recallAction != null && recallAction.WasPressedThisFrame())) Recall();
         }
 
         private void LateUpdate() { AttachNow(); }
 
         public void AttachNow()
         {
-            bool useHand = anchorOverride != null && !Reading;
             Camera camera = Camera.main;
-            Transform anchor = useHand ? anchorOverride : camera != null ? camera.transform : null;
-            if (anchor == null) return;
-            if (lastAnchor != anchor) { needsPlacement = true; lastAnchor = anchor; }
-            if (!useHand && camera.GetComponentInParent<XROrigin>() != null)
+            if (camera == null) return;
+            var eye = camera.transform;
+            if (camera.GetComponentInParent<XROrigin>() == null)
             {
-                if (transform.parent != null) { transform.SetParent(null, true); needsPlacement = true; }
-                if (needsPlacement)
-                {
-                    var guard = camera.GetComponentInParent<XrTrackingGuard>();
-                    if (guard != null && guard.enabled && !guard.HasValidPose) return;
-                    Vector3 offset = Reading ? new Vector3(0, -0.03f, 1f) : viewOffset;
-                    Pose pose = ReadingPose(anchor.position, anchor.rotation, offset);
-                    transform.SetPositionAndRotation(pose.position, pose.rotation);
-                    transform.localScale = Vector3.one;
-                    needsPlacement = false;
-                }
+                if (transform.parent != eye) transform.SetParent(eye, false);
+                Vector3 offset = Reading ? new Vector3(0, -0.03f, 1f) : viewOffset;
+                transform.SetLocalPositionAndRotation(offset, Quaternion.LookRotation(offset));
+                transform.localScale = Vector3.one;
                 return;
             }
-            if (transform.parent != anchor) transform.SetParent(anchor, false);
-            transform.localScale = Vector3.one;
-            if (useHand)
+
+            // A controller can be deactivated by the XR rig. The recall listener must stay alive.
+            if (transform.parent != null) transform.SetParent(null, true);
+            if (Reading && !needsPlacement) return;
+            var guard = camera.GetComponentInParent<XrTrackingGuard>();
+            if (guard != null && guard.enabled && !guard.HasValidPose) return;
+            if (Reading)
             {
-                transform.localPosition = anchorOffset;
-                transform.localRotation = Quaternion.Euler(anchorEuler);
+                var pose = ReadingPose(eye.position, eye.rotation, ReadingOffset);
+                transform.SetPositionAndRotation(pose.position, pose.rotation);
+                transform.localScale = Vector3.one;
+                needsPlacement = false;
+                return;
             }
-            else
-            {
-                Vector3 offset = Reading ? new Vector3(0, -0.03f, 1f) : viewOffset;
-                transform.localPosition = offset;
-                transform.localRotation = Quaternion.LookRotation(offset);
-            }
+
+            var rest = Quaternion.Euler(0f, eye.eulerAngles.y, 0f) * RestingOffset;
+            var direction = anchorOverride != null && anchorOverride.gameObject.activeInHierarchy
+                ? anchorOverride.TransformPoint(anchorOffset) - eye.position : rest;
+            if (direction.sqrMagnitude < 0.02f) direction = rest;
+            var position = eye.position + direction.normalized * Mathf.Max(MinimumHandDistance, direction.magnitude);
+            transform.SetPositionAndRotation(position, Quaternion.LookRotation(direction, Vector3.up));
+            transform.localScale = Vector3.one * CompactScale;
         }
 
         public static Pose ReadingPose(Vector3 eyePosition, Quaternion eyeRotation, Vector3 offset)

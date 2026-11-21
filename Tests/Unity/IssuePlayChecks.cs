@@ -64,7 +64,8 @@ public static class IssuePlayChecks
                 camera.transform.SetPositionAndRotation(rigPose.position + Vector3.up * 1.65f, Quaternion.identity);
                 anchor.SetPositionAndRotation(rigPose.position + new Vector3(-0.45f, 1.2f, 0.65f), Quaternion.Euler(-50, 0, 0));
                 mount.AttachNow();
-                Check(mount.transform.parent == anchor && !mount.Reading, "Clipboard must start on the left hand.");
+                Check(!mount.Reading && !mount.transform.IsChildOf(anchor) && mount.transform.lossyScale.x < 0.5f,
+                    "Compact clipboard must follow the hand independently of its active state.");
                 var before = mount.transform.position;
                 anchor.position += Vector3.right * 0.1f;
                 mount.AttachNow();
@@ -96,7 +97,7 @@ public static class IssuePlayChecks
             else Check(mount.transform.parent == camera.transform, "Desktop clipboard no longer follows view.");
             await Task.Delay(100);
             readingButton.Invoke();
-            Check(!mount.Reading && (origin == null || mount.transform.parent == anchor), "Reduce did not return to the hand.");
+            Check(!mount.Reading && (origin == null || mount.transform.lossyScale.x < 0.5f), "Reduce did not return to the hand.");
 
             var area = UnityEngine.Object.FindAnyObjectByType<SafeTeleportationArea>();
             if (origin != null)

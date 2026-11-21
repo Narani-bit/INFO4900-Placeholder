@@ -6,28 +6,29 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 namespace CercleVR
 {
     [RequireComponent(typeof(Collider))]
-    public sealed class WorldAction : MonoBehaviour
+    public sealed class WorldAction : XRSimpleInteractable
     {
         private Action callback;
-        private XRSimpleInteractable interactable;
         private int lastFrame = -1;
         public void Bind(Action action) { callback = action; }
-        private void Awake()
+        protected override void Awake()
         {
-            interactable = gameObject.AddComponent<XRSimpleInteractable>();
-            interactable.selectEntered.AddListener(Selected);
+            // Register only this target. A chair or a visual child is a separate object.
+            foreach (var shape in GetComponents<Collider>())
+                if (shape.enabled) colliders.Add(shape);
+            base.Awake();
         }
-        private void Selected(SelectEnterEventArgs args) { Invoke(); }
+        protected override void OnSelectEntered(SelectEnterEventArgs args)
+        {
+            base.OnSelectEntered(args);
+            Invoke();
+        }
         public void Invoke()
         {
             if (!XrTrackingGuard.CanInteract) return;
             if (lastFrame == Time.frameCount) return;
             lastFrame = Time.frameCount;
             if (callback != null) callback();
-        }
-        private void OnDestroy()
-        {
-            if (interactable != null) interactable.selectEntered.RemoveListener(Selected);
         }
     }
 }
